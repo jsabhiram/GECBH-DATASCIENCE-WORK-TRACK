@@ -1,0 +1,88 @@
+import numpy as np 
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
+
+#synthetic dataset (data3)
+np.random.seed(42)
+num_samples = 100
+
+# Example different features for data3
+hours_slept = np.random.uniform(4, 10, num_samples)
+study_sessions = np.random.uniform(1, 20, num_samples)
+exercise_hours = np.random.uniform(0, 5, num_samples)  # Adding a new feature: exercise hours
+
+# Target variable
+pass_fail = (hours_slept * 0.3 + study_sessions * 0.4 + exercise_hours * 0.2 + np.random.normal(0, 0.3, num_samples)) > 5
+y = pass_fail.astype(int)
+
+# Create DataFrame for data3
+data3 = pd.DataFrame({
+    'Hours Slept': hours_slept,
+    'Study Sessions': study_sessions,
+    'Exercise Hours': exercise_hours,  # New feature
+    'Pass/Fail': y
+})
+
+print("Dataset Sample:\n", data3.head())
+print("\nStats : \n", data3.describe())
+
+# training and testing sets
+X3 = data3[['Hours Slept', 'Study Sessions', 'Exercise Hours']]  # Include new feature
+y3 = data3['Pass/Fail']
+X3_train, X3_test, y3_train, y3_test = train_test_split(X3, y3, test_size=0.2, random_state=42)
+
+#Train the logistic regression model
+model3 = LogisticRegression()
+model3.fit(X3_train, y3_train)
+
+# Step 4: Evaluate the model
+y3_pred = model3.predict(X3_test)
+accuracy = accuracy_score(y3_test, y3_pred)
+
+print("Model Accuracy:", accuracy)
+print("Confusion Matrix:\n", confusion_matrix(y3_test, y3_pred))
+print("Classification Report:\n", classification_report(y3_test, y3_pred))
+
+# Step 5: Predict new inputs
+new_inputs = pd.DataFrame({
+    'Hours Slept': [6, 8, 2],
+    'Study Sessions': [10, 15, 5],
+    'Exercise Hours': [1, 3, 0]  # New feature for prediction
+})
+new_predictions = model3.predict(new_inputs)
+
+print("New Inputs Predictions:\n", new_inputs)
+print("Predicted Pass/Fail:\n", new_predictions)
+
+# Visualizations
+sns.histplot(data3['Hours Slept'], kde=True)
+plt.title("Hours Slept Distribution")
+plt.show()
+
+sns.histplot(data3['Study Sessions'], kde=True)
+plt.title("Study Sessions Distribution")
+plt.show()
+
+sns.histplot(data3['Exercise Hours'], kde=True)
+plt.title("Exercise Hours Distribution")
+plt.show()
+
+sns.heatmap(data3.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+# ROC Curve and AUC Score
+y3_probs = model3.predict_proba(X3_test)[:, 1]  # Use predicted probabilities
+fpr, tpr, thresholds = roc_curve(y3_test, y3_probs)
+
+plt.plot(fpr, tpr, label=f"AUC = {roc_auc_score(y3_test, y3_probs):.2f}")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+plt.show() 
